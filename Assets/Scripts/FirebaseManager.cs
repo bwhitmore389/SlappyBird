@@ -80,6 +80,12 @@ public class FirebaseManager : MonoBehaviour
         
     }
 
+    public void GuestLoginButton()
+    {
+        StartCoroutine(GuestLogin());
+        User = auth.CurrentUser;
+    }
+
     //Function for the register button
     public void RegisterButton()
     {
@@ -215,6 +221,34 @@ public class FirebaseManager : MonoBehaviour
                     }
                 }
             }
+        }
+    }
+
+    private IEnumerator GuestLogin()
+    {
+        //Call the Firebase auth signin function passing the email and password
+        var LoginTask = auth.SignInAnonymouslyAsync();
+        //Wait until the task completes
+        yield return new WaitUntil(predicate: () => LoginTask.IsCompleted);
+
+        if (LoginTask.Exception != null)
+        {
+            //If there are errors handle them
+            Debug.LogWarning(message: $"Failed to register task with {LoginTask.Exception}");
+            FirebaseException firebaseEx = LoginTask.Exception.GetBaseException() as FirebaseException;
+            AuthError errorCode = (AuthError)firebaseEx.ErrorCode;
+        }
+        else
+        {
+            //User is now logged in
+            //Now get the result
+            Firebase.Auth.FirebaseUser newUser = LoginTask.Result;
+            Debug.LogFormat("User signed in successfully: {0} ({1})",
+            newUser.DisplayName, newUser.UserId);
+
+            //Wait time to show message
+            yield return new WaitForSeconds(1);
+            ScenesManager.Instance.LoadMainMenu();
         }
     }
 }
